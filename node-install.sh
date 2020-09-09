@@ -1,46 +1,49 @@
 #!/bin/bash
 
-echo 'Node Linux Installer by www.github.com/taaem'
-if [[ $EUID -ne 0 ]]
+echo 'Node.js Linux Installer by github.com/taaem, updated by github.com/MichaIng'
+if [[ $EUID != 0 ]]
     then
-        echo 'Need root for installing NodeJS'
-        sudo sh -c 'echo "Got root!"'
+        echo 'root permissions required for installing Node.js'
+        sudo echo 'sudo permissions verified'
+        exit_status=$?
+        if [[ $exit_status != 0 ]]
+            then
+            echo 'ERROR: Failed to get root permissions via "sudo"' >&2
+            exit $exit_status
+        fi
     else
-        echo 'Running as root user'
+        echo 'root permissions verified'
 fi
 
 ARCH=$(uname -m)
-echo "Getting latest stable version for $ARCH ..."
+echo "Searching latest stable version for $ARCH ..."
 URL='https://nodejs.org/dist/'
-if [[ $ARCH == 'arm64' || $ARCH == 'aarch64' ]]
+if [[ $ARCH == 'aarch64' ]]
     then
         URL+='latest/'
-        NAME=$(curl -sf "$URL" | grep -o '>node-v.*-linux-arm64.tar.gz')
-        VER=$(echo "$NAME" | grep -o 'node-v.*-linux-arm64.tar.gz')
+        NAME=$(curl -sSf "$URL" | grep -o '"node-v[0-9.]*-linux-arm64.tar.gz')
 
     elif [[ $ARCH == 'armv6l' ]]
     then
         URL+='latest-v11.x/'
-        NAME=$(curl -sf "$URL" | grep -o '>node-v.*-linux-armv6l.tar.gz')
-        VER=$(echo "$NAME" | grep -o 'node-v.*-linux-armv6l.tar.gz')
+        NAME=$(curl -sSf "$URL" | grep -o '"node-v[0-9.]*-linux-armv6l.tar.gz')
 
     elif [[ $ARCH == 'armv7l' ]]
     then
         URL+='latest/'
-        NAME=$(curl -sf "$URL" | grep -o '>node-v.*-linux-armv7l.tar.gz')
-        VER=$(echo "$NAME" | grep -o 'node-v.*-linux-armv7l.tar.gz')
+        NAME=$(curl -sSf "$URL" | grep -o '"node-v[0-9.]*-linux-armv7l.tar.gz')
 
     elif [[ $ARCH == 'x86_64' ]]
     then
         URL+='latest/'
-        NAME=$(curl -sf "$URL" | grep -o '>node-v.*-linux-x64.tar.gz')
-        VER=$(echo "$NAME" | grep -o 'node-v.*-linux-x64.tar.gz')
+        NAME=$(curl -sSf "$URL" | grep -o '"node-v[0-9.]*-linux-x64.tar.gz')
 
-    else
+    elif [[ $ARCH == 'i'[3-6]'86' ]]
+    then
         URL+='latest-v9.x/'
-        NAME=$(curl -sf "$URL" | grep -o '>node-v.*-linux-x86.tar.gz')
-        VER=$(echo "$NAME" | grep -o 'node-v.*-linux-x86.tar.gz')
+        NAME=$(curl -sSf "$URL" | grep -o '"node-v[0-9.]*-linux-x86.tar.gz')
 fi
+VER=${NAME:1}
 if [[ ! $VER ]]
     then
         echo "ERROR: Failed to find latest stable version for $ARCH" >&2
@@ -48,12 +51,12 @@ if [[ ! $VER ]]
 fi
 echo "Found latest stable version for $ARCH: $VER"
 
-URL+="$VER"
+URL+=$VER
 echo "Downloading $URL ..."
 FILE_PATH='/tmp/node.tar.gz'
 curl -fo "$FILE_PATH" "$URL"
 exit_status=$?
-if [[ $exit_status -ne 0 ]]
+if [[ $exit_status != 0 ]]
     then
         echo "ERROR: Failed to download $URL" >&2
         exit $exit_status
@@ -61,14 +64,15 @@ fi
 echo 'Finished downloading!'
 
 echo "Installing $FILE_PATH ..."
-cd /usr/local && sudo tar --strip-components 1 -xzf "$FILE_PATH"
+[[ -d '/usr/local' ]] || sudo mkdir /usr/local
+cd /usr/local && sudo tar --strip-components=1 -xzf "$FILE_PATH"
 exit_status=$?
-if [[ $exit_status -ne 0 ]]
+if [[ $exit_status != 0 ]]
     then
         echo "ERROR: Failed to extract $FILE_PATH" >&2
         exit $exit_status
 fi
-rm "$FILE_PATH"
+rm -v "$FILE_PATH"
 echo 'Finished installing!'
 
 exit 0
