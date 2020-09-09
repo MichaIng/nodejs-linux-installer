@@ -1,6 +1,16 @@
 # Node.js Linux Installer
 This is a universal Node.js installer for Linux.
-I don't take any responsibilities if you blow your system up!
+
+[![CodeFactor](https://www.codefactor.io/repository/github/michaing/nodejs-linux-installer/badge)](https://www.codefactor.io/repository/github/michaing/nodejs-linux-installer)
+
+The following architectures are currently supported:
+- ARMv6 (armv6l)
+- ARMv7 (armv7l)
+- ARMv8 (aarch64)
+- x86 64-bit (x86_64)
+- x86 32-bit (i386, i486, i586, i686)
+
+**I don't take any responsibilities if you blow your system up!**
 
 ### Installing
 ```
