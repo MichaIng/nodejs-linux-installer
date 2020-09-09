@@ -1,5 +1,5 @@
 # Node.js Linux Installer
-This is a universal Node.js installer for Linux.
+This is a universal Node.js installer for Linux. The [original project by taaem](https://github.com/taaem/nodejs-linux-installer) required some fixes to maintain functionality, which are contained in this fork, together with a few enhancements.
 
 [![CodeFactor](https://www.codefactor.io/repository/github/michaing/nodejs-linux-installer/badge)](https://www.codefactor.io/repository/github/michaing/nodejs-linux-installer)
 
