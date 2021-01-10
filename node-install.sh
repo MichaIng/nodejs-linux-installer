@@ -1,6 +1,47 @@
 #!/bin/bash
 
-echo 'Node.js Linux Installer by github.com/taaem, updated by github.com/MichaIng'
+show_help() {
+    cat <<END
+Universal Node.js installer for Linux. Original project by taaem (github.com/taaem/nodejs-linux-installer) and 
+    MichaIng (github.com/MichaIng/nodejs-linux-installer).
+
+Use this script to install latest version available for your CPU architecture.
+
+Usage: node-install.sh [<params>]
+
+Parameters:
+    -lu
+    --list-unofficial-releases          List all available versions in nodejs.org's unofficial builds.
+    
+    -u <version>
+    --unofficial-version <version>      Install <version> from nodejs.org's unofficial builds at 
+                                        unofficial-builds.nodejs.org/download/release/. E.g. 'v15.5.1'.
+
+END
+}
+
+list_available() {
+    curl -l "https://unofficial-builds.nodejs.org/download/release/index.json" 2>>/dev/null | jq -r '.[].version' | sort -Vr
+}
+
+
+# getting options
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
+  -h | --help )
+    show_help
+    exit
+    ;;
+  -lu | --list-unofficials )
+    list_available
+    exit
+    ;;
+  -u | --unofficial-version )
+    shift; unofficial_build_version=$1
+    [[ -z "$unofficial_build_version" ]] && echo "Specify the version to install when using the --unofficial-build-version flag." && exit 1
+    ;;
+esac; shift; done
+if [[ "$1" == '--' ]]; then shift; fi
+
 if [[ $EUID != 0 ]]
     then
         echo 'root permissions required for installing Node.js'
@@ -16,9 +57,17 @@ if [[ $EUID != 0 ]]
 fi
 
 ARCH=$(uname -m)
-echo "Searching latest stable version for $ARCH ..."
-URL='https://nodejs.org/dist/'
-if [[ $ARCH == 'aarch64' ]]
+
+if [[ ! -z "$unofficial_build_version" ]]; then
+    echo "Searching version $unofficial_build_version for $ARCH ..."
+    URL="https://unofficial-builds.nodejs.org/download/release/${unofficial_build_version}/"
+    NAME="node-${unofficial_build_version}-linux-${ARCH}.tar.gz"
+    curl --output /dev/null --silent --head --fail "${URL}${NAME}" || NAME='' # check if file exists
+    NAME="\"$NAME" # add double quote sign to mimic logic from original script block below.
+else
+    echo "Searching latest stable version for $ARCH ..."
+    URL='https://nodejs.org/dist/'
+    if [[ $ARCH == 'aarch64' ]]
     then
         URL+='latest/'
         NAME=$(curl -sSf "$URL" | grep -o '"node-v[0-9.]*-linux-arm64.tar.gz')
@@ -42,6 +91,7 @@ if [[ $ARCH == 'aarch64' ]]
     then
         URL+='latest-v9.x/'
         NAME=$(curl -sSf "$URL" | grep -o '"node-v[0-9.]*-linux-x86.tar.gz')
+    fi
 fi
 VER=${NAME:1}
 if [[ ! $VER ]]
