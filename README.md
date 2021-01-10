@@ -9,6 +9,7 @@ The following architectures are currently supported:
 - ARMv8 (aarch64)
 - x86 64-bit (x86_64)
 - x86 32-bit (i386, i486, i586, i686)
+- further architectures from nodejs.org's unofficial builds at unofficial-builds.nodejs.org
 
 **I don't take any responsibilities if you blow your system up!**
 
