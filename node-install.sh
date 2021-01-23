@@ -31,7 +31,7 @@ while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
     show_help
     exit
     ;;
-  -lu | --list-unofficials )
+  -lu | --list-unofficial-releases )
     list_available
     exit
     ;;
