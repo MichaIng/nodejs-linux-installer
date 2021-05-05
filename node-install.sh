@@ -11,21 +11,26 @@ Alternatively install a specific unofficial build for rare architectures, using 
 Usage: node-install.sh [<params>]
 
 Parameters:
-    -h,  --help                           Show this help screen
-    -lu, --list-unofficial-releases       List all available versions in nodejs.org's unofficial builds
-    -u,  --unofficial-version <version>   Install <version> from nodejs.org's unofficial builds at
-                                          unofficial-builds.nodejs.org/download/release/, e.g. "v15.5.1"
+    -h,  --help                     Show this help screen
+    -lu, --list-unofficial          List all available versions in nodejs.org's unofficial builds
+    -u,  --unofficial [<version>]   Install either latest version or <version> from nodejs.org's
+                                    unofficial builds at unofficial-builds.nodejs.org/download/release/.
+                                    Syntax of <version> shall be e.g. "v15.5.1".
 END
 }
+
+ARCH=$(uname -m)
+UNOFFICIALS_URI=https://unofficial-builds.nodejs.org/download/release
 
 list_available() {
     if command -v 'curl' > /dev/null && command -v 'sort' > /dev/null; then
         if command -v 'tail' > /dev/null && command -v 'cut' > /dev/null; then
-            curl -sSf https://unofficial-builds.nodejs.org/download/release/index.tab | cut -f1 | tail -n +2 | sort -Vr
-        elif command -v 'jq' > /dev/null; then
-            curl -sSf https://unofficial-builds.nodejs.org/download/release/index.json | jq -r '.[].version' | sort -Vr
+            curl -sSf $UNOFFICIALS_URI/index.tab | grep $ARCH | cut -f1 | tail -n +2 | sort -Vr
+        # elif command -v 'jq' > /dev/null; then
+        #     curl -sSf "$UNOFFICIALS_URI/index.json" | jq -r '.[].version' | sort -Vr
         else
-            echo 'ERROR: Required command line tools tail + cut, OR jq not found.' >&2
+            # echo 'ERROR: Required command line tools tail + cut, OR jq not found.' >&2
+            echo 'ERROR: Required command line tools tail + cut not found.' >&2
             exit 1
         fi
     else
@@ -41,16 +46,20 @@ while [[ $1 ]]; do
         show_help
         exit
         ;;
-    -lu | --list-unofficial-releases )
+    -lu | --list-unofficial )
         list_available
         exit
         ;;
-    -u | --unofficial-version )
+    -u | --unofficial )
         shift; unofficial_build_version=$1
-        [[ -z $unofficial_build_version ]] && echo 'ERROR: Specify the version to install when using the --unofficial-build-version flag.' >&2 && exit 1
+        if [[ -z $unofficial_build_version ]]; then
+            unofficial_build_version=$(curl -sSf $UNOFFICIALS_URI/index.tab | grep $ARCH | cut -f1 | tail -n +2 | sort -V | tail -n 1)
+            echo "Found latest version $unofficial_build_version for architecture $ARCH."
+        fi
         ;;
     -- )
         break
+        ;;
     * )
         echo 'ERROR: Unkown parameter \"$1\" given.' >&2 && exit 1
     esac
@@ -71,11 +80,9 @@ if [[ $EUID != 0 ]]
         echo 'root permissions verified'
 fi
 
-ARCH=$(uname -m)
-
 if [[ $unofficial_build_version ]]; then
     echo "Searching version $unofficial_build_version for $ARCH ..."
-    URL="https://unofficial-builds.nodejs.org/download/release/${unofficial_build_version}/"
+    URL="$UNOFFICIALS_URI/${unofficial_build_version}/"
     NAME="node-${unofficial_build_version}-linux-${ARCH}.tar.gz"
     curl --output /dev/null --silent --head --fail "${URL}${NAME}" || NAME='' # check if file exists
     NAME="\"$NAME" # add double quote sign to mimic logic from original script block below.

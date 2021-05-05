@@ -11,7 +11,7 @@ The following architectures are currently supported:
 - x86 32-bit (i386, i486, i586, i686)**
 - further architectures from [nodejs.org's unofficial builds](unofficial-builds.nodejs.org).
 
-\* The latest official version for ARMv6 is Node v11. For more recent versions, use unofficial builds.  
+\* The latest official version for ARMv6 is Node v11. For more recent versions, use unofficial builds.
 \*\* The latest official version for x86 32-bit is Node v9. For more recent versions, use unofficial builds.
 
 **I don't take any responsibilities if you blow your system up!**
