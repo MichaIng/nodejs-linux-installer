@@ -25,9 +25,9 @@ END
 list_available() {
     if command -v 'curl' > /dev/null && command -v 'sort' > /dev/null; then
         if command -v 'tail' > /dev/null && command -v 'cut' > /dev/null; then
-            curl -l 'https://unofficial-builds.nodejs.org/download/release/index.tab' 2>/dev/null | tail -n +2 | cut -f1 | sort -Vr
+            curl -l https://unofficial-builds.nodejs.org/download/release/index.tab 2>/dev/null | tail -n +2 | cut -f1 | sort -Vr
         elif command -v 'jq' > /dev/null; then
-            curl -l 'https://unofficial-builds.nodejs.org/download/release/index.json' 2>/dev/null | jq -r '.[].version' | sort -Vr
+            curl -l https://unofficial-builds.nodejs.org/download/release/index.json 2>/dev/null | jq -r '.[].version' | sort -Vr
         else
             echo 'Error: Required command line tools tail + cut, OR jq not found.'
             exit 1
