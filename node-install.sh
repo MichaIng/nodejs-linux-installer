@@ -25,6 +25,7 @@ UNOFFICIAL=0
 
 list_available() {
     if command -v 'curl' > /dev/null && command -v 'awk' > /dev/null; then
+        echo "The following unofficial build versions are available for $ARCH:"
         curl -sSf "$UNOFFICIALS_URI/index.tab" | awk "/$ARCH/{print \$1}"
     else
         echo 'ERROR: Required command line tools curl + awk not found.' >&2
@@ -73,15 +74,15 @@ fi
 
 if [[ $UNOFFICIAL == 1 ]]; then
     if [[ $VER ]]; then
-        echo "The following unofficial version was requested: $VER"
+        echo "The following unofficial build version was requested: $VER"
     else
-        echo "Searching latest unofficial version for $ARCH ..."
+        echo "Searching latest unofficial build version for $ARCH ..."
         VER=$(curl -sSf "$UNOFFICIALS_URI/index.tab" | awk "/$ARCH/{print \$1;exit}")
         if [[ ! $VER ]]; then
-            echo "ERROR: Failed to find any unofficial version for $ARCH" >&2
+            echo "ERROR: Failed to find any unofficial build version for $ARCH" >&2
             exit 1
         fi
-        echo "Found latest unofficial version for $ARCH: $VER"
+        echo "Found latest unofficial build version for $ARCH: $VER"
     fi
     URL="$UNOFFICIALS_URI/$VER/node-$VER-linux-$ARCH.tar.gz"
 else
