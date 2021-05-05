@@ -52,7 +52,7 @@ while [[ $1 ]]; do
         break
         ;;
     *)
-        echo 'ERROR: Unkown parameter \"$1\" given.' >&2
+        echo "ERROR: Unkown parameter \"$1\" given." >&2
         exit 1
         ;;
     esac
