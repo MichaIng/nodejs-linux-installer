@@ -1,46 +1,41 @@
 #!/bin/bash
 
+echo 'Universal Node.js Linux Installer by github.com/taaem, updated by github.com/MichaIng'
+
 show_help() {
     cat <<END
-Universal Node.js Linux Installer by github.com/taaem, updated by github.com/MichaIng
 
-Use this script to install latest version available for your CPU architecture.
+Use this script to install the latest official version available for your CPU architecture.
+Alternatively install a specific unofficial build for rare architectures, using the parameters below.
 
 Usage: node-install.sh [<params>]
 
 Parameters:
-    -h
-    --help                              Show this help screen.
-
-    -lu
-    --list-unofficial-releases          List all available versions in nodejs.org's unofficial builds.
-
-    -u <version>
-    --unofficial-version <version>      Install <version> from nodejs.org's unofficial builds at
-                                        unofficial-builds.nodejs.org/download/release/. E.g. 'v15.5.1'.
-
+    -h,  --help                           Show this help screen
+    -lu, --list-unofficial-releases       List all available versions in nodejs.org's unofficial builds
+    -u,  --unofficial-version <version>   Install <version> from nodejs.org's unofficial builds at
+                                          unofficial-builds.nodejs.org/download/release/, e.g. "v15.5.1"
 END
 }
 
 list_available() {
     if command -v 'curl' > /dev/null && command -v 'sort' > /dev/null; then
         if command -v 'tail' > /dev/null && command -v 'cut' > /dev/null; then
-            curl -l https://unofficial-builds.nodejs.org/download/release/index.tab 2>/dev/null | tail -n +2 | cut -f1 | sort -Vr
+            curl -sSf https://unofficial-builds.nodejs.org/download/release/index.tab | cut -f1 | tail -n +2 | sort -Vr
         elif command -v 'jq' > /dev/null; then
-            curl -l https://unofficial-builds.nodejs.org/download/release/index.json 2>/dev/null | jq -r '.[].version' | sort -Vr
+            curl -sSf https://unofficial-builds.nodejs.org/download/release/index.json | jq -r '.[].version' | sort -Vr
         else
-            echo 'Error: Required command line tools tail + cut, OR jq not found.'
+            echo 'ERROR: Required command line tools tail + cut, OR jq not found.' >&2
             exit 1
         fi
     else
-        echo 'Error: Required command line tools curl, sort not found.'
+        echo 'ERROR: Required command line tools curl, sort not found.' >&2
         exit 1
     fi
 }
 
-
 # getting options
-while [[ $1 == -* && $1 != -- ]]; do
+while [[ $1 ]]; do
     case $1 in
     -h | --help )
         show_help
@@ -52,12 +47,15 @@ while [[ $1 == -* && $1 != -- ]]; do
         ;;
     -u | --unofficial-version )
         shift; unofficial_build_version=$1
-        [[ -z $unofficial_build_version ]] && echo 'Error: Specify the version to install when using the --unofficial-build-version flag.' && exit 1
+        [[ -z $unofficial_build_version ]] && echo 'ERROR: Specify the version to install when using the --unofficial-build-version flag.' >&2 && exit 1
         ;;
+    -- )
+        break
+    * )
+        echo 'ERROR: Unkown parameter \"$1\" given.' >&2 && exit 1
     esac
     shift
 done
-if [[ $1 == -- ]]; then shift; fi
 
 if [[ $EUID != 0 ]]
     then
