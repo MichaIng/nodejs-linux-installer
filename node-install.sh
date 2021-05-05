@@ -2,57 +2,62 @@
 
 show_help() {
     cat <<END
-Universal Node.js installer for Linux. Original project by taaem (github.com/taaem/nodejs-linux-installer) and 
-    MichaIng (github.com/MichaIng/nodejs-linux-installer).
+Universal Node.js Linux Installer by github.com/taaem, updated by github.com/MichaIng
 
 Use this script to install latest version available for your CPU architecture.
 
 Usage: node-install.sh [<params>]
 
 Parameters:
+    -h
+    --help                              Show this help screen.
+
     -lu
     --list-unofficial-releases          List all available versions in nodejs.org's unofficial builds.
-    
+
     -u <version>
-    --unofficial-version <version>      Install <version> from nodejs.org's unofficial builds at 
+    --unofficial-version <version>      Install <version> from nodejs.org's unofficial builds at
                                         unofficial-builds.nodejs.org/download/release/. E.g. 'v15.5.1'.
 
 END
 }
 
 list_available() {
-    if command -v 'curl' &> /dev/null && command -v 'sort' &> /dev/null; then
-        if command -v 'tail' &> /dev/null && command -v 'cut' &> /dev/null; then
-            curl -l "https://unofficial-builds.nodejs.org/download/release/index.tab" 2>>/dev/null | tail -n +2 | cut -f1 | sort -Vr
-        elif command -v 'jq' &> /dev/null; then
-            curl -l "https://unofficial-builds.nodejs.org/download/release/index.json" 2>>/dev/null | jq -r '.[].version' | sort -Vr
+    if command -v 'curl' > /dev/null && command -v 'sort' > /dev/null; then
+        if command -v 'tail' > /dev/null && command -v 'cut' > /dev/null; then
+            curl -l 'https://unofficial-builds.nodejs.org/download/release/index.tab' 2>/dev/null | tail -n +2 | cut -f1 | sort -Vr
+        elif command -v 'jq' > /dev/null; then
+            curl -l 'https://unofficial-builds.nodejs.org/download/release/index.json' 2>/dev/null | jq -r '.[].version' | sort -Vr
         else
-            echo "Required command line tools tail + cut, OR jq not found."
+            echo 'Error: Required command line tools tail + cut, OR jq not found.'
             exit 1
         fi
     else
-        echo "Required command line tools curl, sort not found."
+        echo 'Error: Required command line tools curl, sort not found.'
         exit 1
     fi
 }
 
 
 # getting options
-while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
-  -h | --help )
-    show_help
-    exit
-    ;;
-  -lu | --list-unofficial-releases )
-    list_available
-    exit
-    ;;
-  -u | --unofficial-version )
-    shift; unofficial_build_version=$1
-    [[ -z "$unofficial_build_version" ]] && echo "Specify the version to install when using the --unofficial-build-version flag." && exit 1
-    ;;
-esac; shift; done
-if [[ "$1" == '--' ]]; then shift; fi
+while [[ $1 == -* && $1 != -- ]]; do
+    case $1 in
+    -h | --help )
+        show_help
+        exit
+        ;;
+    -lu | --list-unofficial-releases )
+        list_available
+        exit
+        ;;
+    -u | --unofficial-version )
+        shift; unofficial_build_version=$1
+        [[ -z $unofficial_build_version ]] && echo 'Error: Specify the version to install when using the --unofficial-build-version flag.' && exit 1
+        ;;
+    esac
+    shift
+done
+if [[ $1 == -- ]]; then shift; fi
 
 if [[ $EUID != 0 ]]
     then
@@ -70,7 +75,7 @@ fi
 
 ARCH=$(uname -m)
 
-if [[ ! -z "$unofficial_build_version" ]]; then
+if [[ $unofficial_build_version ]]; then
     echo "Searching version $unofficial_build_version for $ARCH ..."
     URL="https://unofficial-builds.nodejs.org/download/release/${unofficial_build_version}/"
     NAME="node-${unofficial_build_version}-linux-${ARCH}.tar.gz"
