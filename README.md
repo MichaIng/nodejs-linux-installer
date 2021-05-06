@@ -11,7 +11,7 @@ The following architectures are currently supported:
 - x86 32-bit (i386, i486, i586, i686)**
 - further architectures from [nodejs.org's unofficial builds](unofficial-builds.nodejs.org).
 
-\* The latest official version for ARMv6 is Node v11. For more recent versions, use unofficial builds.
+\* The latest official version for ARMv6 is Node v11. For more recent versions, use unofficial builds.  
 \*\* The latest official version for x86 32-bit is Node v9. For more recent versions, use unofficial builds.
 
 **I don't take any responsibilities if you blow your system up!**
@@ -26,11 +26,11 @@ Get the help text:
 
 Show a list of all unofficial releases for your CPU architecture available from nodejs.org :
 
-    curl -sSf https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh | bash -s -- --list-unofficial-releases
+    curl -sSf https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh | bash -s -- --list-unofficial
 
 Install unofficial release of node.js with `<version>`:
 
-    curl -sSf https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh | bash -s -- --unofficial-version <version>
+    curl -sSf https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh | bash -s -- --unofficial <version>
 
 
 ### Contributing
