@@ -77,7 +77,8 @@ if [[ $UNOFFICIAL == 1 ]]; then
         echo "The following unofficial build version was requested: $VER"
     else
         echo "Searching latest unofficial build version for $ARCH ..."
-        VER=$(curl -sSf "$UNOFFICIALS_URI/index.tab" | awk "/$ARCH/{print \$1;exit}")
+        # RISC-V: Workaround until index.tab lists existing riscv64 builds: https://unofficial-builds.nodejs.org/download/release/index.tab
+        VER=$(curl -sSf "$UNOFFICIALS_URI/index.tab" | awk "/${ARCH/riscv64/.*}/{print \$1;exit}")
         if [[ ! $VER ]]; then
             echo "ERROR: Failed to find any unofficial build version for $ARCH" >&2
             exit 1
