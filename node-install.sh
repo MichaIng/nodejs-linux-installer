@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo 'Universal Node.js Linux Installer by github.com/taaem, updated by github.com/MichaIng'
 
@@ -20,6 +20,11 @@ END
 }
 
 ARCH=$(uname -m)
+# Detect 64-bit kernel with 32-bit OS/userland: https://github.com/rust-lang/rustup/blob/5af9b94/rustup-init.sh#L193-L210
+read -rN 5 bitness < /proc/self/exe
+[[ $ARCH == 'aarch64' && $bitness == $'\177ELF\001' ]] && ARCH='armv7l'
+[[ $ARCH == 'x86_64' && $bitness == $'\177ELF\001' ]] && ARCH='i386'
+    
 UNOFFICIALS_URI='https://unofficial-builds.nodejs.org/download/release'
 UNOFFICIAL=0
 
@@ -38,11 +43,11 @@ while [[ $1 ]]; do
     case $1 in
     '-h'|'--help')
         show_help
-        exit
+        exit 0
         ;;
     '-lu'|'--list-unofficial')
         list_available
-        exit
+        exit 0
         ;;
     '-u'|'--unofficial')
         UNOFFICIAL=1
@@ -61,15 +66,8 @@ while [[ $1 ]]; do
 done
 
 if [[ $EUID != 0 ]]; then
-    echo 'root permissions required for installing Node.js'
-    sudo echo 'sudo permissions verified'
-    exit_status=$?
-    if [[ $exit_status != 0 ]]; then
-        echo 'ERROR: Failed to get root permissions via "sudo"' >&2
-        exit $exit_status
-    fi
-else
-    echo 'root permissions verified'
+    echo 'ERROR: root permissions required for installing Node.js, please execute this script with "sudo"' >&2
+    exit 1
 fi
 
 if [[ $UNOFFICIAL == 1 ]]; then
