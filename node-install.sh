@@ -7,14 +7,17 @@ show_help() {
 Use this script to install the latest official version available for your CPU architecture.
 Alternatively install a specific unofficial build for rare architectures, using the parameters below.
 
-Usage: node-install.sh [<params>]
+Usage: ./node-install.sh [<params>]
 
 Parameters:
-    -h,  --help                     Show this help screen
-    -lu, --list-unofficial          List all available versions in nodejs.org'\''s unofficial builds
-    -u,  --unofficial [<version>]   Install either latest version or <version> from nodejs.org'\''s
-                                    unofficial builds at unofficial-builds.nodejs.org/download/release/.
-                                    Syntax of <version> shall be e.g. "v15.5.1".'
+  -h, --help                Show this help screen
+  -l, --list                List all available Node.js versions, including official builds*
+  -u, --unofficial          Include unofficial builds* as download source
+  -v, --version <version>   Install specific version with <version> like "v15.5.1"
+
+* Unofficial builds are available at unofficial-builds.nodejs.org
+  and provide (newer) builds for rare, old or experimental architectures, like
+  i386, armv6l or riscv64.'
 }
 
 error_exit() {
@@ -22,89 +25,100 @@ error_exit() {
     exit 1
 }
 
+# curl and awk are required by this script
+command -v 'curl' > /dev/null && command -v 'awk' > /dev/null || error_exit 'Required command line tools curl and/or awk not found'
+
+# Detect architecture
 ARCH=$(uname -m)
+
 # Detect 64-bit kernel with 32-bit OS/userland: https://github.com/rust-lang/rustup/blob/5af9b94/rustup-init.sh#L193-L210
 read -rN 5 bitness < /proc/self/exe
 [[ $ARCH == 'aarch64' && $bitness == $'\177ELF\001' ]] && ARCH='armv7l'
 [[ $ARCH == 'x86_64' && $bitness == $'\177ELF\001' ]] && ARCH='i386'
-    
-UNOFFICIALS_URI='https://unofficial-builds.nodejs.org/download/release'
-UNOFFICIAL=0
+
+# Translate uname arch to Node.js arch
+case $ARCH in
+    'aarch64') ARCH='arm64';;
+    'x86_64') ARCH='x64';;
+    'i'[3-6]'86') ARCH='x86';;
+    *) :;; # assume both to be the same
+esac
+
+# Official and unofficial base URLs
+URL_OFFICIAL='https://nodejs.org/dist'
+URL_UNOFFICIAL='https://unofficial-builds.nodejs.org/download/release'
 
 list_available() {
-    if command -v 'curl' > /dev/null && command -v 'awk' > /dev/null; then
-        echo "The following unofficial build versions are available for $ARCH:"
-        curl -sSf "$UNOFFICIALS_URI/index.tab" | awk "/$ARCH/{print \$1}"
-    else
-        error_exit 'Required command line tools curl + awk not found.'
-    fi
+    { curl -sSf "$URL_OFFICIAL/index.tab" | awk "\$3~/(^|,)linux-$ARCH(,|$)/{print \$1}"; curl -sSf "$URL_UNOFFICIAL/index.tab" | awk "\$3~/(^|,)linux-$ARCH(,|$)/{print \$1\" (unofficial)\"}"; } | sort -Vruk 1,1
 }
 
 # Getting options
+UNOFFICIAL=0
+VERSION=''
 while (( $# )); do
     case $1 in
-    '-h'|'--help')
-        show_help
-        exit 0
+        '-h'|'--help')
+            show_help
+            exit 0
         ;;
-    '-lu'|'--list-unofficial')
-        list_available
-        exit 0
+        '-l'|'--list')
+            echo 'The following Node.js versions are available. Unofficial builds from unofficial-builds.nodejs.org are marked with a trailing "(unofficial)".'
+            list_available
+            exit 0
         ;;
-    '-u'|'--unofficial')
-        UNOFFICIAL=1
-        shift
-        VER=$1
+        '-u'|'--unofficial') UNOFFICIAL=1;;
+        '-v'|'--version')
+            shift
+            VERSION=$1
+            echo "Version \"$VERSION\" was requested"
         ;;
-    '--')
-        break
-        ;;
-    *)
-        error_exit "Unknown parameter \"$1\" given."
-	;;
+        '--') break;;
+        *) error_exit "Unknown parameter \"$1\" given.";;
     esac
     shift
 done
 
+# Exit path for non-root executions
 [[ $EUID == 0 ]] || error_exit 'root permissions required for installing Node.js, please execute this script with "sudo"'
 
-# Download xz archive, if xz-utils are installed, to safe some traffic
+# Download an xz archive if xz-utils are installed to save some traffic
 EXT='gz'
 command -v xz &> /dev/null && EXT='xz'
 
-if [[ $UNOFFICIAL == 1 ]]; then
-    if [[ $VER ]]; then
-        echo "The following unofficial build version was requested: $VER"
+# Obtain version to download
+if [[ $VERSION ]]; then
+    echo "Searching build \"$VERSION\" for architecture \"$ARCH\" ..."
+    if [[ $(curl -sSf "$URL_OFFICIAL/index.tab" | awk "\$1==\"$VERSION\" && \$3~/(^|,)linux-$ARCH(,|$)/") ]]; then
+        URL="$URL_OFFICIAL/$VERSION/node-$VERSION-linux-$ARCH.tar.$EXT"
+    elif [[ $UNOFFICIAL == 1 ]]; then
+        echo "Searching unofficial build \"$VERSION\" for architecture \"$ARCH\" ..."
+        if [[ $(curl -sSf "$URL_UNOFFICIAL/index.tab" | awk "\$1==\"$VERSION\" && \$3~/(^|,)linux-$ARCH(,|$)/") ]]; then
+            URL="$URL_UNOFFICIAL/$VERSION/node-$VERSION-linux-$ARCH.tar.$EXT"
+        else
+            error_exit "Neither an official nor unofficial build \"$VERSION\" was found for architecture \"$ARCH\". Run \"./node-install.sh -l\" to list all available versions for your architecture."
+        fi
     else
-        echo "Searching latest unofficial build version for $ARCH ..."
-        VER=$(curl -sSf "$UNOFFICIALS_URI/index.tab" | awk "/$ARCH/{print \$1;exit}")
-        [[ $VER ]] || error_exit "Failed to find any unofficial build version for $ARCH"
-        echo "Found latest unofficial build version for $ARCH: $VER"
+        error_exit "No official build \"$VERSION\" was found for architecture \"$ARCH\". Run \"./node-install.sh -l\" to list all available versions for your architecture. Run \"./node-install.sh -u -v $VERSION\" to install from unofficial builds if available."
     fi
-    URL="$UNOFFICIALS_URI/$VER/node-$VER-linux-$ARCH.tar.$EXT"
 else
-    echo "Searching latest stable version for $ARCH ..."
-    URL='https://nodejs.org/dist/'
-    if [[ $ARCH == 'aarch64' ]]; then
-        URL+='latest/'
-        NAME=$(curl -sSf "$URL" | grep -o "\"node-v[0-9.]*-linux-arm64.tar.$EXT")
-    elif [[ $ARCH == 'armv6l' ]]; then
-        URL+='latest-v11.x/'
-        NAME=$(curl -sSf "$URL" | grep -o "\"node-v[0-9.]*-linux-armv6l.tar.$EXT")
-    elif [[ $ARCH == 'armv7l' ]]; then
-        URL+='latest/'
-        NAME=$(curl -sSf "$URL" | grep -o "\"node-v[0-9.]*-linux-armv7l.tar.$EXT")
-    elif [[ $ARCH == 'x86_64' ]]; then
-        URL+='latest/'
-        NAME=$(curl -sSf "$URL" | grep -o "\"node-v[0-9.]*-linux-x64.tar.$EXT")
-    elif [[ $ARCH == 'i'[3-6]'86' ]]; then
-        URL+='latest-v9.x/'
-        NAME=$(curl -sSf "$URL" | grep -o "\"node-v[0-9.]*-linux-x86.tar.$EXT")
+    echo "Searching latest version for architecture \"$ARCH\" ..."
+    if [[ $UNOFFICIAL == 1 ]]; then
+        VERSION=$(list_available | head -1)
+    else
+        VERSION=$(list_available | grep -vm1 ' (unofficial)$')
     fi
-    VER=${NAME:1}
-    [[ $VER ]] || error_exit "Failed to find any stable version for $ARCH"
-    echo "Found latest stable version for $ARCH: $VER"
-    URL+=$VER
+    if [[ $VERSION == *' (unofficial)' ]]; then
+        VERSION=${VERSION% (unofficial)}
+        echo "Found latest unofficial build \"$VERSION\""
+        URL="$URL_UNOFFICIAL/$VERSION/node-$VERSION-linux-$ARCH.tar.$EXT"
+    elif [[ $VERSION ]]; then
+        echo "Found latest official build \"$VERSION\""
+        URL="$URL_OFFICIAL/$VERSION/node-$VERSION-linux-$ARCH.tar.$EXT"
+    elif [[ $UNOFFICIAL == 1 ]]; then
+        error_exit "Neither an official nor unofficial build was found for architecture \"$ARCH\"."
+    else
+        error_exit "No official build was found for architecture \"$ARCH\". Run \"./node-install.sh -l\" to check for unofficial builds, which can be installed with \"./node-install.sh -u\"."
+    fi
 fi
 
 echo "Downloading $URL ..."

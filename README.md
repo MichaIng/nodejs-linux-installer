@@ -15,28 +15,42 @@ The following architectures are supported:
 \* *The latest official version for ARMv6 is Node v11. For more recent versions, use unofficial builds.*  
 \*\* *The latest official version for x86 32-bit is Node v9. For more recent versions, use unofficial builds.*
 
-### Usage
+## Usage
 
 **I don't take any responsibilities if you blow your system up!**
 
-Please be aware, that installing Node.js requires **root privileges**. The script will check for root or sudo credentials at start. By default the latest official release for your architecture will be installed:
+*Please be aware, that installing Node.js requires **root privileges**. The script will check for root or sudo credentials at start.*
+
+By default the latest (official) version available for your architecture will be installed:
 
 ```sh
 curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash
 ```
 
-If no (recent) official release is available for your architecture, you may install [nodejs.org's unofficial builds](https://github.com/nodejs/unofficial-builds/), using the options below.
-
-Show a list of all unofficial releases for your CPU architecture available at [nodejs.org](https://unofficial-builds.nodejs.org/download/release/):
+Show a list of all versions available for your architecture, including unofficial builds from [nodejs.org](https://unofficial-builds.nodejs.org/download/release/):
 
 ```sh
-curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --list-unofficial
+curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --list
 ```
 
-Install unofficial release of Node.js with `<version>`:
+Install a specific (official) version `<version>`:
 
 ```sh
-curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --unofficial '<version>'
+curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --version '<version>'
+```
+
+#### If no (recent) official builds are available for your architecture, you may install [nodejs.org's unofficial builds](https://github.com/nodejs/unofficial-builds/), using the options below.
+
+Install a specific unofficial version `<version>`:
+
+```sh
+curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --unofficial --version '<version>'
+```
+
+Install the latest version available for your architecture, no matter whether official or unofficial:
+
+```sh
+curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --unofficial'
 ```
 
 Get the help text:
@@ -45,11 +59,11 @@ Get the help text:
 curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --help
 ```
 
-### Contributing
+## Contributing
 
 Just create a fork and please contribute all your improvements back here!
 
-### License
+## License
 
 [MIT](https://github.com/MichaIng/nodejs-linux-installer/blob/master/LICENSE)
 
