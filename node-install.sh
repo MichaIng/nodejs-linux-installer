@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
-
+{
 echo 'Universal Node.js Linux Installer by github.com/taaem, updated by github.com/MichaIng'
 
 show_help() {
     echo '
 Use this script to install the latest official version available for your CPU architecture.
-Alternatively install a specific unofficial build for rare architectures, using the parameters below.
+Alternatively install a specific version or unofficial build*, using the parameters below.
 
 Usage: ./node-install.sh [<params>]
 
 Parameters:
   -h, --help                Show this help screen
-  -l, --list                List all available Node.js versions, including official builds*
-  -u, --unofficial          Include unofficial builds* as download source
+  -l, --list                List all available Node.js versions, including unofficial* builds
+  -L, --lts                 Consider only LTS versions for download and listing
+  -u, --unofficial          Include unofficial* builds as download source
   -v, --version <version>   Install specific version with <version> like "v15.5.1"
+                            This overrides "--lts", but respects "--unofficial".
 
 * Unofficial builds are available at unofficial-builds.nodejs.org
   and provide (newer) builds for rare, old or experimental architectures, like
-  i386, armv6l or riscv64.'
+  i386, armv6l, riscv64, and loong64.'
 }
 
 error_exit() {
@@ -41,6 +43,7 @@ case $ARCH in
     'aarch64') ARCH='arm64';;
     'x86_64') ARCH='x64';;
     'i'[3-6]'86') ARCH='x86';;
+    'loongarch64') ARCH='loong64';;
     *) :;; # assume both to be the same
 esac
 
@@ -49,23 +52,28 @@ URL_OFFICIAL='https://nodejs.org/dist'
 URL_UNOFFICIAL='https://unofficial-builds.nodejs.org/download/release'
 
 list_available() {
-    { curl -sSf "$URL_OFFICIAL/index.tab" | awk "\$3~/(^|,)linux-$ARCH(,|$)/{print \$1}"; curl -sSf "$URL_UNOFFICIAL/index.tab" | awk "\$3~/(^|,)linux-$ARCH(,|$)/{print \$1\" (unofficial)\"}"; } | sort -Vruk 1,1
+    # LTS anti-pattern
+    local lts=''
+    [[ $LTS ]] && lts='-'
+    {
+        curl -sSf "$URL_OFFICIAL/index.tab" | awk -v arch="$ARCH" -v lts="$lts" '$3~"(^|,)linux-"arch"(,|$)" && $10!=lts {print $1}'
+        curl -sSf "$URL_UNOFFICIAL/index.tab" | awk -v arch="$ARCH" -v lts="$lts" '$3~"(^|,)linux-"arch"(,|$)" && $10!=lts {print $1" (unofficial)"}'
+    } | sort -Vruk 1,1
 }
 
 # Getting options
 UNOFFICIAL=0
+LTS=''
 VERSION=''
+LIST=0
 while (( $# )); do
     case $1 in
         '-h'|'--help')
             show_help
             exit 0
         ;;
-        '-l'|'--list')
-            echo 'The following Node.js versions are available. Unofficial builds from unofficial-builds.nodejs.org are marked with a trailing "(unofficial)".'
-            list_available
-            exit 0
-        ;;
+        '-l'|'--list') LIST=1;;
+        '-L'|'--lts') LTS='LTS ';;
         '-u'|'--unofficial') UNOFFICIAL=1;;
         '-v'|'--version')
             shift
@@ -77,6 +85,12 @@ while (( $# )); do
     esac
     shift
 done
+
+if [[ $LIST == 1 ]]; then
+    echo "The following Node.js ${LTS}versions are available. Unofficial builds from unofficial-builds.nodejs.org are marked with a trailing '(unofficial)'."
+    list_available
+    exit 0
+fi
 
 # Exit path for non-root executions
 [[ $EUID == 0 ]] || error_exit 'root permissions required for installing Node.js, please execute this script with "sudo"'
@@ -101,7 +115,7 @@ if [[ $VERSION ]]; then
         error_exit "No official build \"$VERSION\" was found for architecture \"$ARCH\". Run \"./node-install.sh -l\" to list all available versions for your architecture. Run \"./node-install.sh -u -v $VERSION\" to install from unofficial builds if available."
     fi
 else
-    echo "Searching latest version for architecture \"$ARCH\" ..."
+    echo "Searching latest ${LTS}version for architecture \"$ARCH\" ..."
     if [[ $UNOFFICIAL == 1 ]]; then
         VERSION=$(list_available | head -1)
     else
@@ -109,15 +123,15 @@ else
     fi
     if [[ $VERSION == *' (unofficial)' ]]; then
         VERSION=${VERSION% (unofficial)}
-        echo "Found latest unofficial build \"$VERSION\""
+        echo "Found latest unofficial ${LTS}build \"$VERSION\""
         URL="$URL_UNOFFICIAL/$VERSION/node-$VERSION-linux-$ARCH.tar.$EXT"
     elif [[ $VERSION ]]; then
-        echo "Found latest official build \"$VERSION\""
+        echo "Found latest official ${LTS}build \"$VERSION\""
         URL="$URL_OFFICIAL/$VERSION/node-$VERSION-linux-$ARCH.tar.$EXT"
     elif [[ $UNOFFICIAL == 1 ]]; then
-        error_exit "Neither an official nor unofficial build was found for architecture \"$ARCH\"."
+        error_exit "Neither an official nor unofficial ${LTS}build was found for architecture \"$ARCH\"."
     else
-        error_exit "No official build was found for architecture \"$ARCH\". Run \"./node-install.sh -l\" to check for unofficial builds, which can be installed with \"./node-install.sh -u\"."
+        error_exit "No official ${LTS}build was found for architecture \"$ARCH\". Run \"./node-install.sh -l\" to check for unofficial builds, which can be installed with \"./node-install.sh -u\"."
     fi
 fi
 
@@ -139,3 +153,4 @@ rm -v "$FILE_PATH"
 echo 'Finished installing!'
 
 exit 0
+}

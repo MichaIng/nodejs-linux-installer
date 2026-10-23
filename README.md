@@ -1,6 +1,6 @@
 # Node.js Linux Installer
 
-This is a universal Node.js installer for Linux. The [original project by taaem](https://github.com/taaem/nodejs-linux-installer) required some fixes to maintain functionality, which are contained in this fork, along with other enhancements and support for [nodejs.org's unofficial builds](https://github.com/nodejs/unofficial-builds/).
+This is a universal Node.js installer for Linux, based on the [original project by taaem](https://github.com/taaem/nodejs-linux-installer) with several fixes and extended functionality.
 
 [![CodeFactor](https://www.codefactor.io/repository/github/michaing/nodejs-linux-installer/badge)](https://www.codefactor.io/repository/github/michaing/nodejs-linux-installer)
 
@@ -10,6 +10,8 @@ The following architectures are supported:
 - ARMv8 (aarch64)
 - x86 64-bit (x86_64)
 - x86 32-bit (i386, i486, i586, i686)**
+- ppc64le
+- IBM System/390 (s390x)
 - further architectures from [nodejs.org's unofficial builds](https://github.com/nodejs/unofficial-builds/).
 
 \* *The latest official version for ARMv6 is Node v11. For more recent versions, use unofficial builds.*  
@@ -17,26 +19,38 @@ The following architectures are supported:
 
 ## Usage
 
-**I don't take any responsibilities if you blow your system up!**
+**I don't take any responsibilities if you blow up your system!**
 
 *Please be aware, that installing Node.js requires **root privileges**. The script will check for root or sudo credentials at start.*
 
 By default the latest (official) version available for your architecture will be installed:
 
 ```sh
-curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash
+./node-install.sh
+```
+
+To install the latest LTS version instead:
+
+```sh
+./node-install.sh --lts
 ```
 
 Show a list of all versions available for your architecture, including unofficial builds from [nodejs.org](https://unofficial-builds.nodejs.org/download/release/):
 
 ```sh
-curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --list
+./node-install.sh --list
 ```
 
-Install a specific (official) version `<version>`:
+To limit the list to LTS versions:
 
 ```sh
-curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --version '<version>'
+./node-install.sh --list --lts
+```
+
+Install a specific version `<version>`:
+
+```sh
+./node-install.sh --version '<version>'
 ```
 
 #### If no (recent) official builds are available for your architecture, you may install [nodejs.org's unofficial builds](https://github.com/nodejs/unofficial-builds/), using the options below.
@@ -44,16 +58,22 @@ curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/mas
 Install a specific unofficial version `<version>`:
 
 ```sh
-curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --unofficial --version '<version>'
+./node-install.sh --unofficial --version '<version>'
 ```
 
 Install the latest version available for your architecture, no matter whether official or unofficial:
 
 ```sh
-curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --unofficial'
+./node-install.sh --unofficial'
 ```
 
 Get the help text:
+
+```sh
+./node-install.sh --help
+```
+
+#### To run the latest version of this installer directly:
 
 ```sh
 curl -sSf 'https://raw.githubusercontent.com/MichaIng/nodejs-linux-installer/master/node-install.sh' | bash -s -- --help
